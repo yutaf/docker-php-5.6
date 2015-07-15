@@ -12,7 +12,6 @@ RUN \
     zlib1g-dev \
     libssl-dev \
     libpcre3-dev \
-    git \
 # php
     perl \
     libxml2-dev \
