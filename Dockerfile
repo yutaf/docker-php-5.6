@@ -1,45 +1,42 @@
 FROM ubuntu:14.04
 MAINTAINER yutaf <yutafuji2008@gmail.com>
 
-RUN apt-get update
-RUN apt-get install -y \
-# binaries for login shell usage (not essential)
-  man \
-  curl \
-# vim
-  vim \
+RUN \
+  apt-get update && \
+  apt-get install -y --no-install-recommends \
+# binary
+    curl \
 # Apache, php \
-  make \
-  gcc \
-  zlib1g-dev \
-  libssl-dev \
-  libpcre3-dev \
-  git \
+    make \
+    gcc \
+    zlib1g-dev \
+    libssl-dev \
+    libpcre3-dev \
+    git \
 # php
-  perl \
-  libxml2-dev \
-  libjpeg-dev \
-  libpng12-dev \
-  libfreetype6-dev \
-  libmcrypt-dev \
-  libcurl4-openssl-dev \
-  libreadline-dev \
-  libicu-dev \
-  g++ \
+    perl \
+    libxml2-dev \
+    libjpeg-dev \
+    libpng12-dev \
+    libfreetype6-dev \
+    libmcrypt-dev \
+    libcurl4-openssl-dev \
+    libreadline-dev \
+    libicu-dev \
+    g++ \
 # xdebug
-  autoconf \
+    autoconf \
 # supervisor
-  supervisor
-
-# COPY sources
-COPY src src/
+    supervisor && \
+  rm -r /var/lib/apt/lists/*
 
 #
 # Apache
 #
-
-# from http://apache.cs.utah.edu//httpd/httpd-2.2.29.tar.gz
-RUN cd src && \
+RUN \
+  mkdir -p /usr/local/src/apache && \
+  cd /usr/local/src/apache && \
+  curl -L -O http://apache.cs.utah.edu//httpd/httpd-2.2.29.tar.gz && \
   tar xzvf httpd-2.2.29.tar.gz && \
   cd httpd-2.2.29 && \
     ./configure \
@@ -49,17 +46,18 @@ RUN cd src && \
       --enable-ssl \
       --with-ssl \
       --with-mpm=prefork \
-      --with-pcre
-# install
-RUN cd src/httpd-2.2.29 && \
-  make && make install
+      --with-pcre && \
+  make && \
+  make install && \
+  rm -r /usr/local/src/apache
 
 #
 # php
 #
-
-# from http://php.net/distributions/php-5.6.11.tar.gz
-RUN cd src && \
+RUN \
+  mkdir -p /usr/local/src/php && \
+  cd /usr/local/src/php && \
+  curl -L -O http://php.net/distributions/php-5.6.11.tar.gz && \
   tar xzvf php-5.6.11.tar.gz && \
   cd php-5.6.11 && \
   ./configure \
@@ -92,11 +90,10 @@ RUN cd src && \
     --with-mcrypt=/usr \
     --enable-bcmath \
     --with-curl \
-    --enable-exif
-
-# install
-RUN cd src/php-5.6.11 && \
-  make && make install
+    --enable-exif && \
+  make && \
+  make install && \
+  rm -r /usr/local/src/php
 
 #
 # xdebug
@@ -104,22 +101,21 @@ RUN cd src/php-5.6.11 && \
 
 # set php PATH because using phpize for xdebug installation
 ENV PATH /opt/php-5.6.11/bin:$PATH
-
-# from http://xdebug.org/files/xdebug-2.3.3.tgz
-RUN cd src && \
+RUN \
+  mkdir -p /usr/local/src/xdebug && \
+  cd /usr/local/src/xdebug && \
+  curl -L -O http://xdebug.org/files/xdebug-2.3.3.tgz && \
   tar -xzf xdebug-2.3.3.tgz && \
   cd xdebug-2.3.3 && \
   phpize && \
   ./configure --enable-xdebug && \
   make && \
-  make install
+  make install && \
+  rm -r /usr/local/src/xdebug
 
 # php.ini
 COPY templates/php.ini /srv/php/
 RUN echo 'zend_extension = "/opt/php-5.6.11/lib/php/extensions/no-debug-non-zts-20131226/xdebug.so"' >> /srv/php/php.ini
-
-# remove sources
-RUN rm -rf src
 
 #
 # Edit config files
@@ -143,13 +139,14 @@ RUN sed -i "s/^Listen 80/#&/" /opt/apache2.2.29/conf/httpd.conf && \
 
 COPY templates/apache.conf /srv/apache/apache.conf
 RUN echo 'CustomLog "|/opt/apache2.2.29/bin/rotatelogs /srv/www/logs/access/access.%Y%m%d.log 86400 540" combined' >> /srv/apache/apache.conf && \
-  echo 'ErrorLog "|/opt/apache2.2.29/bin/rotatelogs /srv/www/logs/error/error.%Y%m%d.log 86400 540"' >> /srv/apache/apache.conf
-#  "mkdir {a,b}" does not work in Ubuntu's /bin/sh, And "RUN <command>" uses "/bin/sh -c".
-# Use "RUN ["executable", "param1", "param2"]" instead of "RUN <command>"
-RUN ["/bin/bash", "-c", "mkdir -m 777 -p /srv/www/logs/{access,error,app}"]
-
+  echo 'ErrorLog "|/opt/apache2.2.29/bin/rotatelogs /srv/www/logs/error/error.%Y%m%d.log 86400 540"' >> /srv/apache/apache.conf && \
+  mkdir -p /srv/www/logs/ && \
+  cd /srv/www/logs/ && \
+  mkdir -m 777 access error app && \
+  cd - && \
 # make Apache document root directory
-COPY www/htdocs/ /srv/www/htdocs/
+  mkdir -p /srv/www/htdocs/ && \
+  echo "<?php echo 'hello, php';" > /srv/www/htdocs/index.php
 
 # supervisor
 COPY templates/supervisord.conf /etc/supervisor/conf.d/
@@ -161,10 +158,8 @@ RUN sed -i 's;^PATH="[^"]*;&:/opt/php-5.6.11/bin;' /etc/environment && \
 # set TERM
   echo export TERM=xterm-256color >> /root/.bashrc && \
 # set timezone
-  ln -sf /usr/share/zoneinfo/Japan /etc/localtime
-
+  ln -sf /usr/share/zoneinfo/Japan /etc/localtime && \
 # Delete logs except dot files
-RUN \
   echo '00 5 1,15 * * find /srv/www/logs -regex ".*/\.[^/]*$" -prune -o -type f -mtime +15 -print -exec rm -f {} \;' > /root/crontab && \
   crontab /root/crontab
 
