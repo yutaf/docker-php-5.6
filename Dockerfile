@@ -149,11 +149,11 @@ RUN echo 'CustomLog "|/opt/apache2.2.29/bin/rotatelogs /srv/www/logs/access/acce
 
 # supervisor
 COPY templates/supervisord.conf /etc/supervisor/conf.d/
-RUN echo '[program:apache2]' >> /etc/supervisor/conf.d/supervisord.conf && \
-  echo 'command=/opt/apache2.2.29/bin/httpd -DFOREGROUND' >> /etc/supervisor/conf.d/supervisord.conf
-
+RUN \
+  echo '[program:apache2]' >> /etc/supervisor/conf.d/supervisord.conf && \
+  echo 'command=/opt/apache2.2.29/bin/httpd -DFOREGROUND' >> /etc/supervisor/conf.d/supervisord.conf && \
 # set PATH
-RUN sed -i 's;^PATH="[^"]*;&:/opt/php-5.6.11/bin;' /etc/environment && \
+  sed -i 's;^PATH="[^"]*;&:/opt/php-5.6.11/bin;' /etc/environment && \
 # set TERM
   echo export TERM=xterm-256color >> /root/.bashrc && \
 # set timezone
