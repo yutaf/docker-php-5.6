@@ -148,7 +148,8 @@ RUN echo 'CustomLog "|/opt/apache2.2.29/bin/rotatelogs /srv/www/logs/access/acce
   cd - && \
 # make Apache document root directory
   mkdir -p /srv/www/htdocs/ && \
-  echo "<?php echo 'hello, php';" > /srv/www/htdocs/index.php
+  echo "<?php echo 'hello, php';" > /srv/www/htdocs/index.php && \
+  echo "<?php phpinfo();" > /srv/www/htdocs/info.php
 
 # supervisor
 COPY templates/supervisord.conf /etc/supervisor/conf.d/
