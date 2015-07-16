@@ -95,12 +95,10 @@ RUN \
   make install && \
   rm -r /usr/local/src/php
 
-#
-# xdebug
-#
-
-# set php PATH because using phpize for xdebug installation
+# Set PATH to compile extensions
 ENV PATH /opt/php-5.6.11/bin:$PATH
+
+# xdebug
 RUN \
   mkdir -p /usr/local/src/xdebug && \
   cd /usr/local/src/xdebug && \
@@ -111,7 +109,11 @@ RUN \
   ./configure --enable-xdebug && \
   make && \
   make install && \
-  rm -r /usr/local/src/xdebug
+  cd && \
+  rm -r /usr/local/src/xdebug && \
+# redis
+  pecl install redis
+
 
 # php.ini
 COPY templates/php.ini /srv/php/
