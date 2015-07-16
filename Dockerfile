@@ -6,6 +6,7 @@ RUN \
   apt-get install -y --no-install-recommends \
 # binary
     curl \
+    git \
 # Apache, php \
     make \
     gcc \
