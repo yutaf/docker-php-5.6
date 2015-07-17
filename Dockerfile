@@ -90,6 +90,7 @@ RUN \
     --with-mcrypt=/usr \
     --enable-bcmath \
     --with-curl \
+    --enable-zip \
     --enable-exif && \
   make && \
   make install && \
@@ -112,7 +113,9 @@ RUN \
   cd && \
   rm -r /usr/local/src/xdebug && \
 # redis
-  pecl install redis
+  pecl install redis && \
+# workaround for composer curl error
+  curl -o $HOME/ca-bundle-curl.crt http://curl.haxx.se/ca/cacert.pem
 
 
 # php.ini
