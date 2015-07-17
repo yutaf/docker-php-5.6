@@ -173,5 +173,6 @@ RUN \
 COPY scripts/run.sh /usr/local/bin/run.sh
 RUN chmod +x /usr/local/bin/run.sh
 
+WORKDIR /srv/www
 EXPOSE 80
 CMD ["/usr/local/bin/run.sh"]
