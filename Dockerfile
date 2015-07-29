@@ -36,11 +36,11 @@ RUN \
 RUN \
   mkdir -p /usr/local/src/apache && \
   cd /usr/local/src/apache && \
-  curl -L -O http://apache.cs.utah.edu//httpd/httpd-2.2.29.tar.gz && \
-  tar xzvf httpd-2.2.29.tar.gz && \
-  cd httpd-2.2.29 && \
+  curl -L -O http://archive.apache.org/dist/httpd/httpd-2.2.31.tar.gz && \
+  tar xzvf httpd-2.2.31.tar.gz && \
+  cd httpd-2.2.31 && \
     ./configure \
-      --prefix=/opt/apache2.2.29 \
+      --prefix=/opt/apache2.2.31 \
       --enable-mods-shared=all \
       --enable-proxy \
       --enable-ssl \
@@ -63,7 +63,7 @@ RUN \
   ./configure \
     --prefix=/opt/php-5.6.11 \
     --with-config-file-path=/srv/php \
-    --with-apxs2=/opt/apache2.2.29/bin/apxs \
+    --with-apxs2=/opt/apache2.2.31/bin/apxs \
     --with-libdir=lib64 \
     --enable-mbstring \
     --enable-intl \
@@ -127,26 +127,26 @@ RUN echo 'zend_extension = "/opt/php-5.6.11/lib/php/extensions/no-debug-non-zts-
 #
 
 # Apache config
-RUN sed -i "s/^Listen 80/#&/" /opt/apache2.2.29/conf/httpd.conf && \
-  sed -i "s/^DocumentRoot/#&/" /opt/apache2.2.29/conf/httpd.conf && \
-  sed -i "/^<Directory/,/^<\/Directory/s/^/#/" /opt/apache2.2.29/conf/httpd.conf && \
-  sed -i "s;ScriptAlias /cgi-bin;#&;" /opt/apache2.2.29/conf/httpd.conf && \
-  sed -i "s;#\(Include conf/extra/httpd-mpm.conf\);\1;" /opt/apache2.2.29/conf/httpd.conf && \
-  sed -i "s;#\(Include conf/extra/httpd-default.conf\);\1;" /opt/apache2.2.29/conf/httpd.conf && \
+RUN sed -i "s/^Listen 80/#&/" /opt/apache2.2.31/conf/httpd.conf && \
+  sed -i "s/^DocumentRoot/#&/" /opt/apache2.2.31/conf/httpd.conf && \
+  sed -i "/^<Directory/,/^<\/Directory/s/^/#/" /opt/apache2.2.31/conf/httpd.conf && \
+  sed -i "s;ScriptAlias /cgi-bin;#&;" /opt/apache2.2.31/conf/httpd.conf && \
+  sed -i "s;#\(Include conf/extra/httpd-mpm.conf\);\1;" /opt/apache2.2.31/conf/httpd.conf && \
+  sed -i "s;#\(Include conf/extra/httpd-default.conf\);\1;" /opt/apache2.2.31/conf/httpd.conf && \
 # DirectoryIndex; index.html precedes index.php
-  sed -i "/^\s*DirectoryIndex/s/$/ index.php/" /opt/apache2.2.29/conf/httpd.conf && \
-  sed -i "s/\(ServerTokens \)Full/\1Prod/" /opt/apache2.2.29/conf/extra/httpd-default.conf && \
-  echo "Include /srv/apache/apache.conf" >> /opt/apache2.2.29/conf/httpd.conf && \
+  sed -i "/^\s*DirectoryIndex/s/$/ index.php/" /opt/apache2.2.31/conf/httpd.conf && \
+  sed -i "s/\(ServerTokens \)Full/\1Prod/" /opt/apache2.2.31/conf/extra/httpd-default.conf && \
+  echo "Include /srv/apache/apache.conf" >> /opt/apache2.2.31/conf/httpd.conf && \
 # Change User & Group
   useradd --system --shell /usr/sbin/nologin --user-group --home /dev/null apache; \
-  sed -i "s;^\(User \)daemon$;\1apache;" /opt/apache2.2.29/conf/httpd.conf && \
-  sed -i "s;^\(Group \)daemon$;\1apache;" /opt/apache2.2.29/conf/httpd.conf
+  sed -i "s;^\(User \)daemon$;\1apache;" /opt/apache2.2.31/conf/httpd.conf && \
+  sed -i "s;^\(Group \)daemon$;\1apache;" /opt/apache2.2.31/conf/httpd.conf
 
 COPY templates/apache.conf /srv/apache/apache.conf
-RUN echo 'CustomLog "|/opt/apache2.2.29/bin/rotatelogs /srv/www/logs/access/access.%Y%m%d.log 86400 540" combined' >> /srv/apache/apache.conf && \
-  echo 'ErrorLog "|/opt/apache2.2.29/bin/rotatelogs /srv/www/logs/error/error.%Y%m%d.log 86400 540"' >> /srv/apache/apache.conf && \
-  mkdir -p /srv/www/logs/ && \
-  cd /srv/www/logs/ && \
+RUN echo 'CustomLog "|/opt/apache2.2.31/bin/rotatelogs /srv/www/logs/access/access.%Y%m%d.log 86400 540" combined' >> /srv/apache/apache.conf && \
+  echo 'ErrorLog "|/opt/apache2.2.31/bin/rotatelogs /srv/www/logs/error/error.%Y%m%d.log 86400 540"' >> /srv/apache/apache.conf && \
+  mkdir -p /srv/www/logs && \
+  cd /srv/www/logs && \
   mkdir -m 777 access error app && \
   cd - && \
 # make Apache document root directory
@@ -158,7 +158,7 @@ RUN echo 'CustomLog "|/opt/apache2.2.29/bin/rotatelogs /srv/www/logs/access/acce
 COPY templates/supervisord.conf /etc/supervisor/conf.d/
 RUN \
   echo '[program:apache2]' >> /etc/supervisor/conf.d/supervisord.conf && \
-  echo 'command=/opt/apache2.2.29/bin/httpd -DFOREGROUND' >> /etc/supervisor/conf.d/supervisord.conf && \
+  echo 'command=/opt/apache2.2.31/bin/httpd -DFOREGROUND' >> /etc/supervisor/conf.d/supervisord.conf && \
 # set PATH
   sed -i 's;^PATH="[^"]*;&:/opt/php-5.6.11/bin;' /etc/environment && \
 # set TERM
