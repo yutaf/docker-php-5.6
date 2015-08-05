@@ -4,9 +4,9 @@
 Dotenv.load
 
 Vagrant.configure('2') do |config|
-  config.vm.define "my-do-php" # vagrant machine name
+  config.vm.define "my-do-php-5.6" # vagrant machine name
   config.vm.provider :digital_ocean do |provider, override|
-    override.vm.hostname = "vagrant-my-docker-php" # droplet name
+    override.vm.hostname = "vagrant-my-docker-php-5.6" # droplet name
     override.ssh.private_key_path = ENV['DO_SSH_KEY']
     override.vm.box = 'digital_ocean'
     override.vm.box_url = "https://github.com/smdahlen/vagrant-digitalocean/raw/master/box/digital_ocean.box"
