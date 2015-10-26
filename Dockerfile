@@ -1,4 +1,4 @@
-FROM ubuntu:14.04
+FROM ubuntu:14.04.3
 MAINTAINER yutaf <yutafuji2008@gmail.com>
 
 RUN \
