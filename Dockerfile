@@ -1,11 +1,23 @@
 FROM ubuntu:14.04.3
 MAINTAINER yutaf <yutafuji2008@gmail.com>
 
+# Add php to PATHs to compile extensions like xdebug
+ENV PATH /opt/php-5.6.14/bin:$PATH
+COPY templates/php.ini /srv/php/
+COPY templates/apache.conf /srv/apache/
+COPY scripts/run.sh /usr/local/bin/run.sh
+
 RUN \
   apt-get update && \
-  apt-get install -y --no-install-recommends \
+  DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+    curl && \
+# workaround for curl certification error
+  curl -o $HOME/ca-bundle-curl.crt http://curl.haxx.se/ca/cacert.pem && \
+# node
+  curl --cacert $HOME/ca-bundle-curl.crt -L https://deb.nodesource.com/setup_0.12 | sudo bash - && \
+# Inatall apt packages
+  DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
 # binary
-    curl \
     git \
 # Apache, php \
     make \
@@ -26,16 +38,19 @@ RUN \
     g++ \
 # xdebug
     autoconf \
+# node
+    nodejs \
 # supervisor
     supervisor && \
-  rm -r /var/lib/apt/lists/*
-
+  rm -r /var/lib/apt/lists/* && \
+#
+# Create /usr/local/src directory
+#
+  mkdir -p /usr/local/src && \
 #
 # Apache
 #
-RUN \
-  mkdir -p /usr/local/src/apache && \
-  cd /usr/local/src/apache && \
+  cd /usr/local/src && \
   curl -L -O http://archive.apache.org/dist/httpd/httpd-2.2.31.tar.gz && \
   tar xzvf httpd-2.2.31.tar.gz && \
   cd httpd-2.2.31 && \
@@ -49,19 +64,17 @@ RUN \
       --with-pcre && \
   make && \
   make install && \
-  rm -r /usr/local/src/apache
-
+  cd && \
+  rm -r /usr/local/src/httpd-2.2.31 && \
 #
 # php
 #
-RUN \
-  mkdir -p /usr/local/src/php && \
-  cd /usr/local/src/php && \
-  curl -L -O http://php.net/distributions/php-5.6.11.tar.gz && \
-  tar xzvf php-5.6.11.tar.gz && \
-  cd php-5.6.11 && \
+  cd /usr/local/src && \
+  curl -L -O http://php.net/distributions/php-5.6.14.tar.gz && \
+  tar xzvf php-5.6.14.tar.gz && \
+  cd php-5.6.14 && \
   ./configure \
-    --prefix=/opt/php-5.6.11 \
+    --prefix=/opt/php-5.6.14 \
     --with-config-file-path=/srv/php \
     --with-apxs2=/opt/apache2.2.31/bin/apxs \
     --with-libdir=lib64 \
@@ -94,15 +107,11 @@ RUN \
     --enable-exif && \
   make && \
   make install && \
-  rm -r /usr/local/src/php
-
-# Set PATH to compile extensions
-ENV PATH /opt/php-5.6.11/bin:$PATH
-
+  cd && \
+  rm -r /usr/local/src/php-5.6.14 && \
 # xdebug
-RUN \
-  mkdir -p /usr/local/src/xdebug && \
-  cd /usr/local/src/xdebug && \
+  mkdir -p /usr/local/src && \
+  cd /usr/local/src && \
   curl -L -O http://xdebug.org/files/xdebug-2.3.3.tgz && \
   tar -xzf xdebug-2.3.3.tgz && \
   cd xdebug-2.3.3 && \
@@ -111,23 +120,18 @@ RUN \
   make && \
   make install && \
   cd && \
-  rm -r /usr/local/src/xdebug && \
+  rm -r /usr/local/src/xdebug-2.3.3 && \
 # redis
   pecl install redis && \
-# workaround for composer curl error
-  curl -o $HOME/ca-bundle-curl.crt http://curl.haxx.se/ca/cacert.pem
-
-
-# php.ini
-COPY templates/php.ini /srv/php/
-RUN echo 'zend_extension = "/opt/php-5.6.11/lib/php/extensions/no-debug-non-zts-20131226/xdebug.so"' >> /srv/php/php.ini
-
+# Set zend_extension path
+  echo 'zend_extension = "/opt/php-5.6.14/lib/php/extensions/no-debug-non-zts-20131226/xdebug.so"' >> /srv/php/php.ini && \
+# npm
+  npm install -g npm && \
 #
 # Edit config files
 #
-
 # Apache config
-RUN sed -i "s/^Listen 80/#&/" /opt/apache2.2.31/conf/httpd.conf && \
+  sed -i "s/^Listen 80/#&/" /opt/apache2.2.31/conf/httpd.conf && \
   sed -i "s/^DocumentRoot/#&/" /opt/apache2.2.31/conf/httpd.conf && \
   sed -i "/^<Directory/,/^<\/Directory/s/^/#/" /opt/apache2.2.31/conf/httpd.conf && \
   sed -i "s;ScriptAlias /cgi-bin;#&;" /opt/apache2.2.31/conf/httpd.conf && \
@@ -140,10 +144,8 @@ RUN sed -i "s/^Listen 80/#&/" /opt/apache2.2.31/conf/httpd.conf && \
 # Change User & Group
   useradd --system --shell /usr/sbin/nologin --user-group --home /dev/null apache; \
   sed -i "s;^\(User \)daemon$;\1apache;" /opt/apache2.2.31/conf/httpd.conf && \
-  sed -i "s;^\(Group \)daemon$;\1apache;" /opt/apache2.2.31/conf/httpd.conf
-
-COPY templates/apache.conf /srv/apache/apache.conf
-RUN echo 'CustomLog "|/opt/apache2.2.31/bin/rotatelogs /srv/www/logs/access/access.%Y%m%d.log 86400 540" combined' >> /srv/apache/apache.conf && \
+  sed -i "s;^\(Group \)daemon$;\1apache;" /opt/apache2.2.31/conf/httpd.conf && \
+  echo 'CustomLog "|/opt/apache2.2.31/bin/rotatelogs /srv/www/logs/access/access.%Y%m%d.log 86400 540" combined' >> /srv/apache/apache.conf && \
   echo 'ErrorLog "|/opt/apache2.2.31/bin/rotatelogs /srv/www/logs/error/error.%Y%m%d.log 86400 540"' >> /srv/apache/apache.conf && \
   mkdir -p /srv/www/logs && \
   cd /srv/www/logs && \
@@ -160,18 +162,16 @@ RUN \
   echo '[program:apache2]' >> /etc/supervisor/conf.d/supervisord.conf && \
   echo 'command=/opt/apache2.2.31/bin/httpd -DFOREGROUND' >> /etc/supervisor/conf.d/supervisord.conf && \
 # set PATH
-  sed -i 's;^PATH="[^"]*;&:/opt/php-5.6.11/bin;' /etc/environment && \
+  sed -i 's;^PATH="[^"]*;&:/opt/php-5.6.14/bin;' /etc/environment && \
 # set TERM
   echo export TERM=xterm-256color >> /root/.bashrc && \
 # set timezone
 #  ln -sf /usr/share/zoneinfo/Japan /etc/localtime && \
 # Delete logs except dot files
-  echo '00 5 1,15 * * find /srv/www/logs -regex ".*/\.[^/]*$" -prune -o -type f -mtime +15 -print -exec rm -f {} \;' > /root/crontab && \
-  crontab /root/crontab
-
-# Set up script for running container
-COPY scripts/run.sh /usr/local/bin/run.sh
-RUN chmod +x /usr/local/bin/run.sh
+  echo '00 5 1,15 * * find /srv/www/logs -not -regex ".*/\.[^/]*$" -type f -mtime +15 -exec rm -f {} \;' > /root/crontab && \
+  crontab /root/crontab && \
+# chmod script for running container
+  chmod +x /usr/local/bin/run.sh
 
 WORKDIR /srv/www
 EXPOSE 80
