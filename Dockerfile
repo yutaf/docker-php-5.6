@@ -14,7 +14,7 @@ RUN \
 # workaround for curl certification error
   curl -o $HOME/ca-bundle-curl.crt http://curl.haxx.se/ca/cacert.pem && \
 # node
-  curl --cacert $HOME/ca-bundle-curl.crt -L https://deb.nodesource.com/setup_0.12 | sudo bash - && \
+  curl --cacert $HOME/ca-bundle-curl.crt -L https://deb.nodesource.com/setup_4.x | bash - && \
 # Inatall apt packages
   DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
 # binary
