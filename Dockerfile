@@ -8,16 +8,11 @@ COPY templates/apache.conf /srv/apache/
 COPY scripts/run.sh /usr/local/bin/run.sh
 
 RUN \
+# Inatall apt packages
   apt-get update && \
   DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
-    curl && \
-# workaround for curl certification error
-  curl -o $HOME/ca-bundle-curl.crt http://curl.haxx.se/ca/cacert.pem && \
-# node
-  curl --cacert $HOME/ca-bundle-curl.crt -L https://deb.nodesource.com/setup_4.x | bash - && \
-# Inatall apt packages
-  DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
 # binary
+    curl \
     git \
 # Apache, php \
     make \
@@ -38,11 +33,11 @@ RUN \
     g++ \
 # xdebug
     autoconf \
-# node
-    nodejs \
 # supervisor
     supervisor && \
   rm -r /var/lib/apt/lists/* && \
+# workaround for curl certification error
+  curl -o $HOME/ca-bundle-curl.crt http://curl.haxx.se/ca/cacert.pem && \
 #
 # Create /usr/local/src directory
 #
@@ -125,8 +120,6 @@ RUN \
   pecl install redis && \
 # Set zend_extension path
   echo 'zend_extension = "/opt/php-5.6.14/lib/php/extensions/no-debug-non-zts-20131226/xdebug.so"' >> /srv/php/php.ini && \
-# npm
-  npm install -g npm && \
 #
 # Edit config files
 #
