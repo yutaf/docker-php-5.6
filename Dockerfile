@@ -2,7 +2,7 @@ FROM ubuntu:14.04.3
 MAINTAINER yutaf <yutafuji2008@gmail.com>
 
 # Add php to PATHs to compile extensions like xdebug
-ENV PATH /opt/php-5.6.14/bin:$PATH
+ENV PATH /opt/php-5.6.16/bin:$PATH
 COPY templates/php.ini /srv/php/
 COPY templates/apache.conf /srv/apache/
 COPY scripts/run.sh /usr/local/bin/run.sh
@@ -65,11 +65,11 @@ RUN \
 # php
 #
   cd /usr/local/src && \
-  curl -L -O http://php.net/distributions/php-5.6.14.tar.gz && \
-  tar xzvf php-5.6.14.tar.gz && \
-  cd php-5.6.14 && \
+  curl -L -O http://php.net/distributions/php-5.6.16.tar.gz && \
+  tar xzvf php-5.6.16.tar.gz && \
+  cd php-5.6.16 && \
   ./configure \
-    --prefix=/opt/php-5.6.14 \
+    --prefix=/opt/php-5.6.16 \
     --with-config-file-path=/srv/php \
     --with-apxs2=/opt/apache2.2.31/bin/apxs \
     --with-libdir=lib64 \
@@ -103,7 +103,7 @@ RUN \
   make && \
   make install && \
   cd && \
-  rm -r /usr/local/src/php-5.6.14 && \
+  rm -r /usr/local/src/php-5.6.16 && \
 # xdebug
   mkdir -p /usr/local/src && \
   cd /usr/local/src && \
@@ -119,7 +119,7 @@ RUN \
 # redis
   pecl install redis && \
 # Set zend_extension path
-  echo 'zend_extension = "/opt/php-5.6.14/lib/php/extensions/no-debug-non-zts-20131226/xdebug.so"' >> /srv/php/php.ini && \
+  echo 'zend_extension = "/opt/php-5.6.16/lib/php/extensions/no-debug-non-zts-20131226/xdebug.so"' >> /srv/php/php.ini && \
 #
 # Edit config files
 #
@@ -155,7 +155,7 @@ RUN \
   echo '[program:apache2]' >> /etc/supervisor/conf.d/supervisord.conf && \
   echo 'command=/opt/apache2.2.31/bin/httpd -DFOREGROUND' >> /etc/supervisor/conf.d/supervisord.conf && \
 # set PATH
-  sed -i 's;^PATH="[^"]*;&:/opt/php-5.6.14/bin;' /etc/environment && \
+  sed -i 's;^PATH="[^"]*;&:/opt/php-5.6.16/bin;' /etc/environment && \
 # set TERM
   echo export TERM=xterm-256color >> /root/.bashrc && \
 # set timezone
