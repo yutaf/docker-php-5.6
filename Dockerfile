@@ -2,7 +2,7 @@ FROM ubuntu:14.04.3
 MAINTAINER yutaf <yutafuji2008@gmail.com>
 
 # Add php to PATHs to compile extensions like xdebug
-ENV PATH /opt/php-5.6.16/bin:$PATH
+ENV PATH /opt/php-5.6.18/bin:$PATH
 COPY templates/php.ini /srv/php/
 COPY templates/apache.conf /srv/apache/
 COPY scripts/run.sh /usr/local/bin/run.sh
@@ -41,10 +41,12 @@ RUN \
 #
 # Create /usr/local/src directory
 #
-  mkdir -p /usr/local/src && \
+  mkdir -p /usr/local/src
+
 #
 # Apache
 #
+RUN \
   cd /usr/local/src && \
   curl -L -O http://archive.apache.org/dist/httpd/httpd-2.2.31.tar.gz && \
   tar xzvf httpd-2.2.31.tar.gz && \
@@ -60,16 +62,18 @@ RUN \
   make && \
   make install && \
   cd && \
-  rm -r /usr/local/src/httpd-2.2.31 && \
+  rm -r /usr/local/src/httpd-2.2.31
+
 #
 # php
 #
+RUN \
   cd /usr/local/src && \
-  curl -L -O http://php.net/distributions/php-5.6.16.tar.gz && \
-  tar xzvf php-5.6.16.tar.gz && \
-  cd php-5.6.16 && \
+  curl -L -O http://php.net/distributions/php-5.6.18.tar.gz && \
+  tar xzvf php-5.6.18.tar.gz && \
+  cd php-5.6.18 && \
   ./configure \
-    --prefix=/opt/php-5.6.16 \
+    --prefix=/opt/php-5.6.18 \
     --with-config-file-path=/srv/php \
     --with-apxs2=/opt/apache2.2.31/bin/apxs \
     --with-libdir=lib64 \
@@ -103,11 +107,12 @@ RUN \
   make && \
   make install && \
   cd && \
-  rm -r /usr/local/src/php-5.6.16 && \
+  rm -r /usr/local/src/php-5.6.18
+
 # xdebug
-  mkdir -p /usr/local/src && \
+RUN \
   cd /usr/local/src && \
-  curl -L -O http://xdebug.org/files/xdebug-2.3.3.tgz && \
+  curl -k -L -O http://xdebug.org/files/xdebug-2.3.3.tgz && \
   tar -xzf xdebug-2.3.3.tgz && \
   cd xdebug-2.3.3 && \
   phpize && \
@@ -116,14 +121,18 @@ RUN \
   make install && \
   cd && \
   rm -r /usr/local/src/xdebug-2.3.3 && \
-# redis
-  pecl install redis && \
 # Set zend_extension path
-  echo 'zend_extension = "/opt/php-5.6.16/lib/php/extensions/no-debug-non-zts-20131226/xdebug.so"' >> /srv/php/php.ini && \
+  echo 'zend_extension = "/opt/php-5.6.18/lib/php/extensions/no-debug-non-zts-20131226/xdebug.so"' >> /srv/php/php.ini
+
+# redis
+RUN \
+  pecl install redis
+
 #
 # Edit config files
 #
 # Apache config
+RUN \
   sed -i "s/^Listen 80/#&/" /opt/apache2.2.31/conf/httpd.conf && \
   sed -i "s/^DocumentRoot/#&/" /opt/apache2.2.31/conf/httpd.conf && \
   sed -i "/^<Directory/,/^<\/Directory/s/^/#/" /opt/apache2.2.31/conf/httpd.conf && \
@@ -145,9 +154,10 @@ RUN \
   mkdir -m 777 access error app && \
   cd - && \
 # make Apache document root directory
-  mkdir -p /srv/www/htdocs/ && \
-  echo "<?php echo 'hello, php';" > /srv/www/htdocs/index.php && \
-  echo "<?php phpinfo();" > /srv/www/htdocs/info.php
+  mkdir -p /srv/www/htdocs
+#  mkdir -p /srv/www/htdocs/ && \
+#  echo "<?php echo 'hello, php';" > /srv/www/htdocs/index.php && \
+#  echo "<?php phpinfo();" > /srv/www/htdocs/info.php
 
 # supervisor
 COPY templates/supervisord.conf /etc/supervisor/conf.d/
@@ -155,7 +165,7 @@ RUN \
   echo '[program:apache2]' >> /etc/supervisor/conf.d/supervisord.conf && \
   echo 'command=/opt/apache2.2.31/bin/httpd -DFOREGROUND' >> /etc/supervisor/conf.d/supervisord.conf && \
 # set PATH
-  sed -i 's;^PATH="[^"]*;&:/opt/php-5.6.16/bin;' /etc/environment && \
+  sed -i 's;^PATH="[^"]*;&:/opt/php-5.6.18/bin;' /etc/environment && \
 # set TERM
   echo export TERM=xterm-256color >> /root/.bashrc && \
 # set timezone
