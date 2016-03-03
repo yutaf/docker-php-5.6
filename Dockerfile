@@ -35,9 +35,11 @@ RUN \
     autoconf \
 # supervisor
     supervisor && \
-  rm -r /var/lib/apt/lists/* && \
+  rm -r /var/lib/apt/lists/*
+
+RUN \
 # workaround for curl certification error
-  curl -o $HOME/ca-bundle-curl.crt http://curl.haxx.se/ca/cacert.pem && \
+  curl -k -L -o $HOME/ca-bundle-curl.crt https://curl.haxx.se/ca/cacert.pem && \
 #
 # Create /usr/local/src directory
 #
@@ -112,7 +114,7 @@ RUN \
 # xdebug
 RUN \
   cd /usr/local/src && \
-  curl -k -L -O http://xdebug.org/files/xdebug-2.3.3.tgz && \
+  curl --cacert $HOME/ca-bundle-curl.crt -L -O http://xdebug.org/files/xdebug-2.3.3.tgz && \
   tar -xzf xdebug-2.3.3.tgz && \
   cd xdebug-2.3.3 && \
   phpize && \
